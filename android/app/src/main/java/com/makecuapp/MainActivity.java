@@ -1,6 +1,7 @@
 package com.makecuapp;
 
 import com.facebook.react.ReactActivity;
+import com.polidea.reactnativeble.BlePackage;
 
 public class MainActivity extends ReactActivity {
 

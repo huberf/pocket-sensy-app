@@ -12,6 +12,15 @@ import {
   View
 } from 'react-native';
 
+// Setup BLE
+import { BleManager } from 'react-native-ble-plx';
+
+constructor() {
+    super();
+    this.manager = new BleManager();
+    ...
+}
+
 const instructions = Platform.select({
   ios: 'Press Cmd+R to reload,\n' +
     'Cmd+D or shake for dev menu',
