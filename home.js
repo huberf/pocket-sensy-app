@@ -12,10 +12,12 @@ import {
   Alert,
   FlatList,
   Button,
+  ScrollView,
   View
 } from 'react-native';
 
 var base64 = require('base-64');
+var utf8 = require('utf8');
 
 // Setup BLE
 import { BleManager } from 'react-native-ble-plx';
@@ -65,20 +67,21 @@ export default class App extends Component<Props> {
         header: 'Get ready for awesome.',
          statusMessage: 'Connecting...',
         points: [
-          "",
-          "",
-          "",
-          "",
-          ""
+          "0,0",
+          "0,0",
+          "0,0",
+          "0,0",
+          "0,0"
         ],
         dataVals: [
-          [ 50, 10, 40, 95, -4, -24, 85, 91, 35, 53, -53, 24, 50, -20, -80 ],
-          [],
-          [],
-          [],
-          []
+          [ 50, 10, 40, 95, 4, 24, 85, 91, 35, 53, 53, 24, 50, 20, 80 ],
+          [0, 0, 0],
+          [0,0,0],
+          [0,0,0],
+          [0,0,0]
         ],
-        ttsOn: false
+        ttsOn: false,
+        killed: false
       }
     this.device = null;
       this.manager = new BleManager();
@@ -100,7 +103,7 @@ export default class App extends Component<Props> {
 
         // Check if it is a device you are looking for based on advertisement data
         // or other criteria.
-        if (device.name === 'PocketSensy' ||
+        if (device.name === 'PocketSensy' || device.name === 'PocketSen' ||
             device.name === 'ARDUINO 101-AD6F') {
 
             // Stop scanning as it's not necessary if you are scanning for one device.
@@ -129,104 +132,111 @@ export default class App extends Component<Props> {
     });
   }
   checkCharacteristics() {
+    this.iters += 1;
     var toCheck = [
-      "19B10000-E8F2-537E-4F6C-D104768A1214",
-      "19B10000-E8F2-537E-4F6C-D104768A1215",
-      "19B10000-E8F2-537E-4F6C-D104768A1216",
-      "19B10000-E8F2-537E-4F6C-D104768A1217",
-      "19B10000-E8F2-537E-4F6C-D104768A1218"
+      "19B10001-E8F2-537E-4F6C-D104768A1215",
+      "19B10002-E8F2-537E-4F6C-D104768A1215",
+      "19B10003-E8F2-537E-4F6C-D104768A1215",
+      "19B10004-E8F2-537E-4F6C-D104768A1215",
+      "19B10005-E8F2-537E-4F6C-D104768A1215"
     ];
-    for (var i = 0; i < 5; i++) {
+    // Read only three sensors
+    for (var i = 0; i < 3; i++) {
       this.manager.readCharacteristicForDevice(
         this.device.id,
-        "19B10000-E8F2-537E-4F6C-D104768A1214",
+        "19B10000-E8F2-537E-4F6C-D104768A1215",
         toCheck[i]
       ).then((characteristic) => {
         var data = characteristic.value;
+        //data = 'Zm9vIMKpIGJhciDwnYyGIGJheg==';
+        data = "MTA=";
         var newVal = base64.decode(data);
+        //var newVal = utf8.decode(bytes);
           //Alert.alert("Hey: " + newVal);
-          if (data != "C") {
-            this.state.dataVals[i] = this.state.dataVals[0].concat([newVal]);
-          }
+          this.state.dataVals[i] = this.state.dataVals[i].concat([newVal]);
+      })
+      .catch((error) => {
+        Alert.alert("An error occured. Restart the app.\n" + error);
+        this.setState({ killed: true })
       });
       this.setState({
         dataVals: this.state.dataVals,
       })
     }
+    // Speak every 4 seconds
+    if (this.state.ttsOn && (this.iters % 20) == 0) {
+      Tts.speak("Voltage " + this.state.dataVals[0][this.state.dataVals[0].length - 1])
+    }
   }
   updateGraph() {
-    this.iters += 1;
-    this.checkCharacteristics();
-    var values = this.state.dataVals[0];
-    var points = "";
-    var start = 0;
-    if (values.length > 200) {
-      start = values.length - 200;
+    //this.checkCharacteristics();
+    for (var i = 0; i < 3; i++) {
+      var values = this.state.dataVals[i];
+      var points = "";
+      var start = 0;
+      if (values.length > 200) {
+        start = values.length - 200;
+      }
+      for (var i = 0; i < values.length; i++) {
+        points += i + ',' + 5 + ' ';
+      }
+      // Speak every 4 seconds
+      if (this.state.ttsOn && (this.iters % 20) == 0) {
+        Tts.speak("Voltage " + values[values.length - 1])
+      }
+      this.state.points[i] = points;
     }
-    for (var i = 0; i < values.length; i++) {
-      points += i + ',' + 5 + ' ';
-    }
-    if (this.state.ttsOn && (this.iters % 10) == 0) {
-      Tts.speak("Voltage " + values[values.length - 1])
-    }
-    Alert.alert(values);
-    this.state.points[0] = points;
+    //Alert.alert(points)
     this.setState({ points: points });
   }
   startUpdate() {
     var update = () => {
-      this.updateGraph();
+      if (!this.state.killed) {
+        this.checkCharacteristics();
+      }
     }
     setInterval(update, 200);
   }
   render() {
     return (
-      <View style={styles.container}>
+      <ScrollView style={{paddingLeft: 10, paddingRight: 10, flex: 1}}>
         <Text style={styles.welcome}>
           {this.state.header}
         </Text>
         {this.state.bodyMessage}
         <Text>{this.state.statusMessage}</Text>
         <Button onPress={() => {this.setState({ ttsOn: !this.state.ttsOn});}} title="Toggle Speech" />
-            <View width={200} height={100}>
+            <View width={300} height={200}>
             <Text>Voltage</Text>
-            <Svg
-            height="100"
-            width="200"
-            >
-                <Polyline
-                    points={this.state.points[0]}
-                    fill="none"
-                    stroke="black"
-                    strokeWidth="3"
-                />
-            </Svg> 
+            <AreaChart
+                style={ { height: 200 } }
+                data={ this.state.dataVals[0] }
+                contentInset={ { top: 30, bottom: 30 } }
+                curve={shape.curveNatural}
+                svg={{ fill: 'rgba(134, 65, 244, 0.8)' }}
+            />
             </View>
-<FlatList
-  data={this.state.data}
-  renderItem={({item}) => (
-    <MyItem
-      item={item}
-      onPress={() =>
-        this.setState((oldState) => ({
-          selected: {
-            // New instance breaks `===`
-            ...oldState.selected, // copy old data
-            [item.key]: !oldState.selected[item.key], // toggle
-          },
-        }))
-      }
-      selected={
-        !!this.state.selected[item.key] // renderItem depends on state
-      }
-    />
-  )}
-  selected={
-    // Can be any prop that doesn't collide with existing props
-    this.state.selected // A change to selected should re-render FlatList
-  }
-/>
-      </View>
+            <View width={300} height={200}>
+            <Text>Temp</Text>
+            <AreaChart
+                style={ { height: 200 } }
+                data={ this.state.dataVals[1] }
+                contentInset={ { top: 30, bottom: 30 } }
+                curve={shape.curveNatural}
+                svg={{ fill: 'rgba(134, 65, 244, 0.8)' }}
+            />
+            </View>
+            <View width={300} height={200}>
+            <Text>Acceleration</Text>
+            <AreaChart
+                style={ { height: 200 } }
+                data={ this.state.dataVals[2] }
+                contentInset={ { top: 30, bottom: 30 } }
+                curve={shape.curveNatural}
+                svg={{ fill: 'rgba(134, 65, 244, 0.8)' }}
+            />
+            </View>
+      </ScrollView>
     );
   }
 }
