@@ -18,12 +18,13 @@ import {
 
 var base64 = require('base-64');
 var utf8 = require('utf8');
+var Buffer = require('buffer/').Buffer 
 
 // Setup BLE
 import { BleManager } from 'react-native-ble-plx';
 
 // Setup graphing
-import { AreaChart } from 'react-native-svg-charts'
+import { AreaChart, YAxis } from 'react-native-svg-charts'
 import { ProgressCircle } from 'react-native-svg-charts'
 import * as shape from 'd3-shape'
 import Svg,{
@@ -47,10 +48,8 @@ import Svg,{
 import Tts from 'react-native-tts';
 
 const instructions = Platform.select({
-  ios: 'Press Cmd+R to reload,\n' +
-    'Cmd+D or shake for dev menu',
-  android: 'Double tap R on your keyboard to reload,\n' +
-    'Shake or press menu button for dev menu',
+  ios: 'Make sure Bluetooth is enabled',
+  android: 'Make sure Bluetooth is enabled',
 });
 
 type Props = {};
@@ -73,12 +72,19 @@ export default class App extends Component<Props> {
           "0,0",
           "0,0"
         ],
+        sensorNames: [
+          "Voltage",
+          "Temp",
+          "Acceleration",
+          "Humidity",
+          "Light"
+        ],
         dataVals: [
-          [ 50, 10, 40, 95, 4, 24, 85, 91, 35, 53, 53, 24, 50, 20, 80 ],
-          [0, 0, 0],
-          [0,0,0],
-          [0,0,0],
-          [0,0,0]
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 50],
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         ],
         ttsOn: false,
         killed: false
@@ -93,6 +99,8 @@ export default class App extends Component<Props> {
             subscription.remove();
         }
     }, true);
+    // For demoing data load.
+    this.demoUpdate();
   }
   scanAndConnect() {
     this.manager.startDeviceScan(null, null, (error, device) => {
@@ -148,20 +156,26 @@ export default class App extends Component<Props> {
         toCheck[i]
       ).then((characteristic) => {
         var data = characteristic.value;
+        this.state.points[i] = data;
+        this.setState({ points: this.state.points})
         //data = 'Zm9vIMKpIGJhciDwnYyGIGJheg==';
-        data = "MTA=";
-        var newVal = base64.decode(data);
+        //data = "MTA=";
+        //var newVal = base64.decode(data);
+        var b = new Buffer(data, 'base64')
+        var newVal = b.toString();
         //var newVal = utf8.decode(bytes);
           //Alert.alert("Hey: " + newVal);
           this.state.dataVals[i] = this.state.dataVals[i].concat([newVal]);
+          this.state.dataVals[i] = this.state.dataVals[i].concat([5]);
+          this.state.dataVals[i] = this.state.dataVals[i].slice(1);
+          this.setState({
+            dataVals: this.state.dataVals,
+          })
       })
       .catch((error) => {
         Alert.alert("An error occured. Restart the app.\n" + error);
         this.setState({ killed: true })
       });
-      this.setState({
-        dataVals: this.state.dataVals,
-      })
     }
     // Speak every 4 seconds
     if (this.state.ttsOn && (this.iters % 20) == 0) {
@@ -169,25 +183,15 @@ export default class App extends Component<Props> {
     }
   }
   updateGraph() {
-    //this.checkCharacteristics();
-    for (var i = 0; i < 3; i++) {
-      var values = this.state.dataVals[i];
-      var points = "";
-      var start = 0;
-      if (values.length > 200) {
-        start = values.length - 200;
-      }
-      for (var i = 0; i < values.length; i++) {
-        points += i + ',' + 5 + ' ';
-      }
-      // Speak every 4 seconds
-      if (this.state.ttsOn && (this.iters % 20) == 0) {
-        Tts.speak("Voltage " + values[values.length - 1])
-      }
-      this.state.points[i] = points;
-    }
-    //Alert.alert(points)
-    this.setState({ points: points });
+    this.state.dataVals[0] = this.state.dataVals[0].concat([Math.random()]);
+    this.state.dataVals[0] = this.state.dataVals[0].slice(1);
+    this.state.dataVals[1] = this.state.dataVals[1].concat([Math.random()]);
+    this.state.dataVals[1] = this.state.dataVals[1].slice(1);
+    this.state.dataVals[2] = this.state.dataVals[2].concat([Math.random()]);
+    this.state.dataVals[2] = this.state.dataVals[2].slice(1);
+    this.setState({
+      dataVals: this.state.dataVals,
+    })
   }
   startUpdate() {
     var update = () => {
@@ -197,6 +201,14 @@ export default class App extends Component<Props> {
     }
     setInterval(update, 200);
   }
+  demoUpdate() {
+    var update = () => {
+      if (!this.state.killed) {
+        this.updateGraph();
+      }
+    }
+    setInterval(update, 100);
+  }
   render() {
     return (
       <ScrollView style={{paddingLeft: 10, paddingRight: 10, flex: 1}}>
@@ -205,36 +217,88 @@ export default class App extends Component<Props> {
         </Text>
         {this.state.bodyMessage}
         <Text>{this.state.statusMessage}</Text>
-        <Button onPress={() => {this.setState({ ttsOn: !this.state.ttsOn});}} title="Toggle Speech" />
-            <View width={300} height={200}>
-            <Text>Voltage</Text>
-            <AreaChart
-                style={ { height: 200 } }
-                data={ this.state.dataVals[0] }
-                contentInset={ { top: 30, bottom: 30 } }
-                curve={shape.curveNatural}
-                svg={{ fill: 'rgba(134, 65, 244, 0.8)' }}
-            />
+        <Button onPress={() => {this.setState({ ttsOn: !this.state.ttsOn});}} color="#841584" title="Toggle Speech" />
+
+            <View width={350} height={300}>
+              <View style={{flexDirection: 'row'}}>
+                <Text>{this.state.sensorNames[0]}</Text>
+                <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'flex-end'}}>
+                  <Text>Raw Value: {this.state.dataVals[0][this.state.dataVals[0].length-1]}</Text>
+                </View>
+              </View>
+              <View style={ { height: 200, flexDirection: 'row' } }>
+                  <YAxis
+                    data={this.state.dataVals[0]}
+                    contentInset={ { top: 0, bottom: 0 } }
+                    svg={{
+                        fill: 'grey',
+                        fontSize: 10,
+                    }}
+                    formatLabel={ value => `${value} V` }
+                  />
+                  <AreaChart
+                      style={ { flex: 1, marginLeft: 16 } }
+                      data={ this.state.dataVals[0] }
+                      contentInset={ { top: 30, bottom: 30 } }
+                      curve={shape.curveNatural}
+                      svg={{ fill: 'rgba(134, 65, 244, 0.8)' }}
+                      contentInset={{ top: 0, bottom: 0 }}
+                  />
+              </View>
             </View>
-            <View width={300} height={200}>
-            <Text>Temp</Text>
-            <AreaChart
-                style={ { height: 200 } }
-                data={ this.state.dataVals[1] }
-                contentInset={ { top: 30, bottom: 30 } }
-                curve={shape.curveNatural}
-                svg={{ fill: 'rgba(134, 65, 244, 0.8)' }}
-            />
+            <View width={350} height={300}>
+              <View style={{flexDirection: 'row'}}>
+                <Text>{this.state.sensorNames[1]}</Text>
+                <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'flex-end'}}>
+                  <Text>Raw Value: {this.state.dataVals[1][this.state.dataVals[1].length-1]}</Text>
+                </View>
+              </View>
+              <View style={ { height: 200, flexDirection: 'row' } }>
+                  <YAxis
+                    data={this.state.dataVals[1]}
+                    contentInset={ { top: 0, bottom: 0 } }
+                    svg={{
+                        fill: 'grey',
+                        fontSize: 10,
+                    }}
+                    formatLabel={ value => `${value} ºF` }
+                  />
+                  <AreaChart
+                      style={ { flex: 1, marginLeft: 16 } }
+                      data={ this.state.dataVals[1] }
+                      contentInset={ { top: 30, bottom: 30 } }
+                      curve={shape.curveNatural}
+                      svg={{ fill: 'rgba(134, 65, 244, 0.8)' }}
+                      contentInset={{ top: 0, bottom: 0 }}
+                  />
+              </View>
             </View>
-            <View width={300} height={200}>
-            <Text>Acceleration</Text>
-            <AreaChart
-                style={ { height: 200 } }
-                data={ this.state.dataVals[2] }
-                contentInset={ { top: 30, bottom: 30 } }
-                curve={shape.curveNatural}
-                svg={{ fill: 'rgba(134, 65, 244, 0.8)' }}
-            />
+            <View width={350} height={300}>
+            <View style={{flexDirection: 'row'}}>
+                <Text>{this.state.sensorNames[2]}</Text>
+                <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'flex-end'}}>
+                  <Text>Raw Value: {this.state.dataVals[2][this.state.dataVals[2].length-1]}</Text>
+                </View>
+              </View>
+              <View style={ { height: 200, flexDirection: 'row' } }>
+                  <YAxis
+                    data={this.state.dataVals[2]}
+                    contentInset={ { top: 0, bottom: 0 } }
+                    svg={{
+                        fill: 'grey',
+                        fontSize: 10,
+                    }}
+                    formatLabel={ value => `${value} N` }
+                  />
+                  <AreaChart
+                      style={ { flex: 1, marginLeft: 16 } }
+                      data={ this.state.dataVals[2] }
+                      contentInset={ { top: 30, bottom: 30 } }
+                      curve={shape.curveNatural}
+                      svg={{ fill: 'rgba(134, 65, 244, 0.8)' }}
+                      contentInset={{ top: 0, bottom: 0 }}
+                  />
+              </View>
             </View>
       </ScrollView>
     );
