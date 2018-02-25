@@ -44,6 +44,8 @@ import Svg,{
     Stop
 } from 'react-native-svg';
 
+var Spinner = require('react-native-spinkit');
+
 // Setup TTS
 import Tts from 'react-native-tts';
 
@@ -64,7 +66,8 @@ export default class App extends Component<Props> {
           {instructions}
         </Text></View>),
         header: 'Get ready for awesome.',
-         statusMessage: 'Connecting...',
+         connected: false,
+         statusMessage: "Connecting...",
         points: [
           "0,0",
           "0,0",
@@ -74,13 +77,14 @@ export default class App extends Component<Props> {
         ],
         sensorNames: [
           "Voltage",
-          "Temp",
+          "Hall Effect",
           "Acceleration",
           "Humidity",
-          "Light"
+          "Temp"
         ],
+        lastVal: 0,
         dataVals: [
-          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 50],
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
           [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
           [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
           [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -112,7 +116,7 @@ export default class App extends Component<Props> {
         // Check if it is a device you are looking for based on advertisement data
         // or other criteria.
         if (device.name === 'PocketSensy' || device.name === 'PocketSen' ||
-            device.name === 'ARDUINO 101-AD6F') {
+            device.name === 'ARDUINO 101-AD6F' || device.name === 'ARDUINO 101-AD63') {
 
             // Stop scanning as it's not necessary if you are scanning for one device.
             this.manager.stopDeviceScan();
@@ -123,6 +127,7 @@ export default class App extends Component<Props> {
               this.setState({ 
                 bodyMessage: (<View></View>),
                 header: "Connected",
+                connected: true,
                 statusMessage: "ID: " + device.id
               });
                 return device.discoverAllServicesAndCharacteristics()
@@ -139,7 +144,7 @@ export default class App extends Component<Props> {
         }
     });
   }
-  checkCharacteristics() {
+  async checkCharacteristics() {
     this.iters += 1;
     var toCheck = [
       "19B10001-E8F2-537E-4F6C-D104768A1215",
@@ -148,8 +153,53 @@ export default class App extends Component<Props> {
       "19B10004-E8F2-537E-4F6C-D104768A1215",
       "19B10005-E8F2-537E-4F6C-D104768A1215"
     ];
-    // Read only three sensors
-    for (var i = 0; i < 3; i++) {
+    var ALPHABET = {'-': 62, '1': 53, '0': 52, '3': 55, '2': 54, '5': 57, '4': 56, '7': 59, '6': 58, '9': 61, '8': 60, 'A': 0, 'C': 2, 'B': 1, 'E': 4, 'D': 3, 'G': 6, 'F': 5, 'I': 8, 'H': 7, 'K': 10, 'J': 9, 'M': 12, 'L': 11, 'O': 14, 'N': 13, 'Q': 16, 'P': 15, 'S': 18, 'R': 17, 'U': 20, 'T': 19, 'W': 22, 'V': 21, 'Y': 24, 'X': 23, 'Z': 25, '_': 63, 'a': 26, 'c': 28, 'b': 27, 'e': 30, 'd': 29, 'g': 32, 'f': 31, 'i': 34, 'h': 33, 'k': 36, 'j': 35, 'm': 38, 'l': 37, 'o': 40, 'n': 39, 'q': 42, 'p': 41, 's': 44, 'r': 43, 'u': 46, 't': 45, 'w': 48, 'v': 47, 'y': 50, 'x': 49, 'z': 51};
+
+    /*async function decode(s, invoke, location) {
+      var n = 0;
+      let result = '';
+      for(var i=0; i <= s.length; i++) {
+        if (i == s.length) {
+          Alert.alert(n);
+          await invoke(n, location);
+          continue;
+        }
+          var c = s.charAt(i);
+          n = n * 64 + ALPHABET[c];
+          //Alert.alert('Hey: ' + n);
+      }
+    }*/
+    var decode = (s, invoke, location) => {
+      this.state.points[location] = s;
+      this.setState({ points: this.state.points });
+        var n = 0;
+        let result = '';
+        for(var i=0; i <= s.length; i++) {
+          if (i == s.length) {
+            //Alert.alert('Hey: ' + n);
+            invoke(n, location);
+            continue;
+          }
+            var c = s.charAt(i);
+            n = n * 64 + ALPHABET[c];
+            invoke(n, location);
+        }
+    }
+    var setter = (data, location) => {
+      //Alert.alert(data);
+      //Alert.alert(newVal)
+      //var newVal = utf8.decode(bytes);
+        //Alert.alert("Hey: " + newVal);
+        //this.state.dataVals[i] = this.state.dataVals[i].concat([newVal]);
+        //Alert.alert(data);
+        //this.state.dataVals[i] = this.state.dataVals[i].concat([data]);
+        //this.state.dataVals[i] = this.state.dataVals[i].slice(1);
+        this.setState({
+          dataVals: this.state.dataVals,
+        })
+    }
+    // Read all sensors
+    for (var i = 0; i < 4; i++) {
       this.manager.readCharacteristicForDevice(
         this.device.id,
         "19B10000-E8F2-537E-4F6C-D104768A1215",
@@ -161,16 +211,10 @@ export default class App extends Component<Props> {
         //data = 'Zm9vIMKpIGJhciDwnYyGIGJheg==';
         //data = "MTA=";
         //var newVal = base64.decode(data);
-        var b = new Buffer(data, 'base64')
-        var newVal = b.toString();
-        //var newVal = utf8.decode(bytes);
-          //Alert.alert("Hey: " + newVal);
-          this.state.dataVals[i] = this.state.dataVals[i].concat([newVal]);
-          this.state.dataVals[i] = this.state.dataVals[i].concat([5]);
-          this.state.dataVals[i] = this.state.dataVals[i].slice(1);
-          this.setState({
-            dataVals: this.state.dataVals,
-          })
+        //var b = new Buffer(data, 'base64')
+        //var newVal = b.toString();
+        newVal = decode(data, setter, i);
+        this.setState({ points: [data, "0","0","0","0"]});
       })
       .catch((error) => {
         Alert.alert("An error occured. Restart the app.\n" + error);
@@ -179,10 +223,12 @@ export default class App extends Component<Props> {
     }
     // Speak every 4 seconds
     if (this.state.ttsOn && (this.iters % 20) == 0) {
+      //this.state.lastVal = this.state.dataVals[0][this.state.dataVals[0].length - 1];
       Tts.speak("Voltage " + this.state.dataVals[0][this.state.dataVals[0].length - 1])
     }
   }
   updateGraph() {
+    this.iters+=1;
     this.state.dataVals[0] = this.state.dataVals[0].concat([Math.random()]);
     this.state.dataVals[0] = this.state.dataVals[0].slice(1);
     this.state.dataVals[1] = this.state.dataVals[1].concat([Math.random()]);
@@ -192,6 +238,11 @@ export default class App extends Component<Props> {
     this.setState({
       dataVals: this.state.dataVals,
     })
+    // Speak every 4 seconds
+    if (this.state.ttsOn && (this.iters % 20) == 0) {
+      //this.state.lastVal = this.state.dataVals[0][this.state.dataVals[0].length - 1];
+      Tts.speak("Voltage " + this.state.dataVals[0][this.state.dataVals[0].length - 1])
+    }
   }
   startUpdate() {
     var update = () => {
@@ -216,12 +267,16 @@ export default class App extends Component<Props> {
           {this.state.header}
         </Text>
         {this.state.bodyMessage}
-        <Text>{this.state.statusMessage}</Text>
+        <View style={{justifyContent: 'center', alignItems: 'center'}}>
+          <Spinner style={{marginTop: 10, marginBottom: 50, textAlign: 'center'}} isVisible={!this.state.connected} size={50} type={'FadingCircle'} color={'black'}/>
+        </View>
+        <Text style={styles.instructions}>{this.state.statusMessage}</Text>
         <Button onPress={() => {this.setState({ ttsOn: !this.state.ttsOn});}} color="#841584" title="Toggle Speech" />
 
             <View width={350} height={300}>
               <View style={{flexDirection: 'row'}}>
                 <Text>{this.state.sensorNames[0]}</Text>
+                <Text>{this.state.points[0]}</Text>
                 <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'flex-end'}}>
                   <Text>Raw Value: {this.state.dataVals[0][this.state.dataVals[0].length-1]}</Text>
                 </View>
